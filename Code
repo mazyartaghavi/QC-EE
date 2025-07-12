@@ -1,0 +1,360 @@
+import numpy as np
+from qiskit import Aer, QuantumCircuit, transpile, assemble
+from qiskit.providers.aer import AerSimulator
+from qiskit.algorithms import QAOA
+from qiskit.circuit.library import ZZFeatureMap, RealAmplitudes
+from qiskit.opflow import PauliSumOp, I, Z, X
+
+# Define the QAOA algorithm
+def qaoa_solver(cost_function, p=1, gamma=1.0, beta=1.0):
+    # Quantum circuit for QAOA
+    num_qubits = len(cost_function)
+    feature_map = ZZFeatureMap(num_qubits)
+    ansatz = RealAmplitudes(num_qubits, reps=p)
+
+    # Set the cost Hamiltonian
+    hamiltonian = PauliSumOp.from_list(cost_function)
+
+    # QAOA setup
+    simulator = AerSimulator()
+    qaoa = QAOA(hamiltonian, feature_map, ansatz, optimizer=None)
+    
+    # Run the solver
+    result = qaoa.compute_minimum_eigenvalue()
+    
+    return result.eigenvalue
+
+import torch
+import torch.nn as nn
+import torch.optim as optim
+import numpy as np
+
+class ActorCritic(nn.Module):
+    def __init__(self, state_space, action_space):
+        super(ActorCritic, self).__init__()
+        self.actor = nn.Sequential(
+            nn.Linear(state_space, 128),
+            nn.ReLU(),
+            nn.Linear(128, action_space)
+        )
+        self.critic = nn.Sequential(
+            nn.Linear(state_space, 128),
+            nn.ReLU(),
+            nn.Linear(128, 1)
+        )
+    
+    def forward(self, state):
+        action_probs = self.actor(state)
+        state_value = self.critic(state)
+        return action_probs, state_value
+
+def train_marl(actor_critic, env, episodes=1000):
+    optimizer = optim.Adam(actor_critic.parameters(), lr=1e-3)
+    for episode in range(episodes):
+        state = env.reset()
+        done = False
+        total_reward = 0
+        while not done:
+            state_tensor = torch.tensor(state, dtype=torch.float32)
+            action_probs, state_value = actor_critic(state_tensor)
+            action = torch.argmax(action_probs).item()
+            next_state, reward, done, _ = env.step(action)
+            
+            total_reward += reward
+            target = reward + (0.99 * state_value)
+            loss = nn.MSELoss()(state_value, target)
+
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+
+            state = next_state
+        print(f"Episode {episode+1}, Total Reward: {total_reward}")
+
+import numpy as np
+from qiskit import Aer, QuantumCircuit, transpile, assemble
+from qiskit.providers.aer import AerSimulator
+from qiskit.algorithms import QAOA
+from qiskit.circuit.library import ZZFeatureMap, RealAmplitudes
+from qiskit.opflow import PauliSumOp, I, Z, X
+
+# Define the QAOA algorithm
+def qaoa_solver(cost_function, p=1, gamma=1.0, beta=1.0):
+    # Quantum circuit for QAOA
+    num_qubits = len(cost_function)
+    feature_map = ZZFeatureMap(num_qubits)
+    ansatz = RealAmplitudes(num_qubits, reps=p)
+
+    # Set the cost Hamiltonian
+    hamiltonian = PauliSumOp.from_list(cost_function)
+
+    # QAOA setup
+    simulator = AerSimulator()
+    qaoa = QAOA(hamiltonian, feature_map, ansatz, optimizer=None)
+    
+    # Run the solver
+    result = qaoa.compute_minimum_eigenvalue()
+    
+    return result.eigenvalue
+
+
+import torch
+import torch.nn as nn
+import torch.optim as optim
+import numpy as np
+
+class ActorCritic(nn.Module):
+    def __init__(self, state_space, action_space):
+        super(ActorCritic, self).__init__()
+        self.actor = nn.Sequential(
+            nn.Linear(state_space, 128),
+            nn.ReLU(),
+            nn.Linear(128, action_space)
+        )
+        self.critic = nn.Sequential(
+            nn.Linear(state_space, 128),
+            nn.ReLU(),
+            nn.Linear(128, 1)
+        )
+    
+    def forward(self, state):
+        action_probs = self.actor(state)
+        state_value = self.critic(state)
+        return action_probs, state_value
+
+def train_marl(actor_critic, env, episodes=1000):
+    optimizer = optim.Adam(actor_critic.parameters(), lr=1e-3)
+    for episode in range(episodes):
+        state = env.reset()
+        done = False
+        total_reward = 0
+        while not done:
+            state_tensor = torch.tensor(state, dtype=torch.float32)
+            action_probs, state_value = actor_critic(state_tensor)
+            action = torch.argmax(action_probs).item()
+            next_state, reward, done, _ = env.step(action)
+            
+            total_reward += reward
+            target = reward + (0.99 * state_value)
+            loss = nn.MSELoss()(state_value, target)
+
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+
+            state = next_state
+        print(f"Episode {episode+1}, Total Reward: {total_reward}")
+
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+
+# Placeholder for MARL agent class, to be replaced with actual code
+class MARLAgent:
+    def __init__(self, policy):
+        self.policy = policy
+        
+    def predict(self, state):
+        return np.random.choice([0, 1])  # Dummy policy
+    
+    def update(self, state, action, reward):
+        pass
+
+def evaluate_model(model, env, num_episodes=100):
+    accuracies = []
+    precisions = []
+    recalls = []
+    f1_scores = []
+    
+    for _ in range(num_episodes):
+        state = env.reset()
+        done = False
+        true_labels = []
+        predicted_labels = []
+        while not done:
+            action = model.predict(state)
+            true_label = env.get_true_label(state)
+            reward = env.step(action)
+            model.update(state, action, reward)
+            
+            true_labels.append(true_label)
+            predicted_labels.append(action)
+            done = env.is_done()
+        
+        accuracies.append(accuracy_score(true_labels, predicted_labels))
+        precisions.append(precision_score(true_labels, predicted_labels))
+        recalls.append(recall_score(true_labels, predicted_labels))
+        f1_scores.append(f1_score(true_labels, predicted_labels))
+    
+    return np.mean(accuracies), np.mean(precisions), np.mean(recalls), np.mean(f1_scores)
+
+# Example evaluation (Dummy environment)
+class DummyEnvironment:
+    def reset(self):
+        return np.random.rand(5)
+    
+    def step(self, action):
+        return np.random.randn(), np.random.randint(2)
+    
+    def get_true_label(self, state):
+        return np.random.randint(2)
+    
+    def is_done(self):
+        return np.random.rand() > 0.95
+
+env = DummyEnvironment()
+model = MARLAgent(policy="DQN")
+
+acc, prec, rec, f1 = evaluate_model(model, env)
+print(f"Accuracy: {acc}, Precision: {prec}, Recall: {rec}, F1: {f1}")
+
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+
+# Placeholder for MARL agent class, to be replaced with actual code
+class MARLAgent:
+    def __init__(self, policy):
+        self.policy = policy
+        
+    def predict(self, state):
+        return np.random.choice([0, 1])  # Dummy policy
+    
+    def update(self, state, action, reward):
+        pass
+
+def evaluate_model(model, env, num_episodes=100):
+    accuracies = []
+    precisions = []
+    recalls = []
+    f1_scores = []
+    
+    for _ in range(num_episodes):
+        state = env.reset()
+        done = False
+        true_labels = []
+        predicted_labels = []
+        while not done:
+            action = model.predict(state)
+            true_label = env.get_true_label(state)
+            reward = env.step(action)
+            model.update(state, action, reward)
+            
+            true_labels.append(true_label)
+            predicted_labels.append(action)
+            done = env.is_done()
+        
+        accuracies.append(accuracy_score(true_labels, predicted_labels))
+        precisions.append(precision_score(true_labels, predicted_labels))
+        recalls.append(recall_score(true_labels, predicted_labels))
+        f1_scores.append(f1_score(true_labels, predicted_labels))
+    
+    return np.mean(accuracies), np.mean(precisions), np.mean(recalls), np.mean(f1_scores)
+
+# Example evaluation (Dummy environment)
+class DummyEnvironment:
+    def reset(self):
+        return np.random.rand(5)
+    
+    def step(self, action):
+        return np.random.randn(), np.random.randint(2)
+    
+    def get_true_label(self, state):
+        return np.random.randint(2)
+    
+    def is_done(self):
+        return np.random.rand() > 0.95
+
+env = DummyEnvironment()
+model = MARLAgent(policy="DQN")
+
+acc, prec, rec, f1 = evaluate_model(model, env)
+print(f"Accuracy: {acc}, Precision: {prec}, Recall: {rec}, F1: {f1}")
+
+import numpy as np
+
+# Placeholder for the full and ablated Q-CMAPO models
+class FullQCMAPO:
+    def predict(self, state):
+        return np.random.choice([0, 1])  # Dummy policy
+    
+    def train(self, state, action, reward):
+        pass
+
+class AblatedQCMAPO:
+    def predict(self, state):
+        return np.random.choice([0, 1])  # Dummy policy (ablated part)
+
+    def train(self, state, action, reward):
+        pass
+
+def evaluate_ablation(model, env, num_episodes=100):
+    accuracies = []
+    for _ in range(num_episodes):
+        state = env.reset()
+        done = False
+        true_labels = []
+        predicted_labels = []
+        while not done:
+            action = model.predict(state)
+            true_label = env.get_true_label(state)
+            reward = env.step(action)
+            model.train(state, action, reward)
+            
+            true_labels.append(true_label)
+            predicted_labels.append(action)
+            done = env.is_done()
+        
+        accuracies.append(np.mean(np.array(true_labels) == np.array(predicted_labels)))
+    return np.mean(accuracies)
+
+env = DummyEnvironment()
+full_model = FullQCMAPO()
+ablated_model = AblatedQCMAPO()
+
+full_model_acc = evaluate_ablation(full_model, env)
+ablated_model_acc = evaluate_ablation(ablated_model, env)
+
+print(f"Full Model Accuracy: {full_model_acc}, Ablated Model Accuracy: {ablated_model_acc}")
+
+import matplotlib.pyplot as plt
+import numpy as np
+
+# Simulating convergence data
+x = np.arange(0, 100, 1)
+y_full = np.exp(-x/50) + 0.5
+y_ablation = np.exp(-x/40) + 0.5
+
+# Plotting convergence curves
+plt.figure(figsize=(10, 6))
+plt.plot(x, y_full, label="Full Q-CMAPO", color='blue')
+plt.plot(x, y_ablation, label="Ablated Q-CMAPO", color='red')
+plt.title('Convergence Curves')
+plt.xlabel('Training Iterations')
+plt.ylabel('Reward')
+plt.legend()
+plt.grid(True)
+plt.savefig("convergence_curves.png")
+plt.show()
+
+import rospy
+from std_msgs.msg import String
+
+# Example ROS Node
+def ros_node():
+    rospy.init_node('qcmapo_ros_node', anonymous=True)
+    pub = rospy.Publisher('qcmapo_output', String, queue_size=10)
+    
+    rate = rospy.Rate(10)  # 10hz
+    while not rospy.is_shutdown():
+        output_msg = "Q-CMAPO Algorithm Output: Successful"  # Replace with real output
+        rospy.loginfo(output_msg)
+        pub.publish(output_msg)
+        rate.sleep()
+
+if __name__ == '__main__':
+    try:
+        ros_node()
+    except rospy.ROSInterruptException:
+        pass
+
