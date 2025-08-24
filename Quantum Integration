@@ -1,0 +1,27 @@
+How the Quantum Integration Works
+
+Policies can be classical (2-layer MLP) or quantum (QAOA-parametrized).
+
+Quantum policies are implemented via PennyLane and executed on Qiskit Aer backends:
+
+qcmapo/agents/qaoa_actor.py defines a QAOAPolicy using a qml.QNode(device="qiskit.aer", interface="torch").
+
+Training uses PyTorch autograd through parameter-shift gradients supplied by PennyLane.
+
+You can switch backends via config (e.g., qiskit.aer statevector simulator by default). Hardware execution is supported but optional.
+
+Reproducing Paper Artifacts
+
+Ablation (Quantum vs. Classical CTDE):
+
+Script: scripts/run_ablation.sh
+
+Outputs: results/ablation/*.csv, figures in figures/ablation_*
+
+Hyperparameter Sensitivity:
+
+Script: scripts/run_sensitivity.sh
+
+Outputs: results/sensitivity/*.csv, figures in figures/sensitivity_*
+
+Seeds & determinism: We fix seeds at all relevant libraries and log configs per run.
