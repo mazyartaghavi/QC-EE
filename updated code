@@ -1,0 +1,16 @@
+python scripts/train.py \
+  --config qcmapo/configs/default.yaml \
+  algorithm.qcmapo=True \
+  algorithm.qaoa.n_qubits=6 \
+  algorithm.qaoa.depth=2 \
+  train.total_steps=10000 \
+  logging.project="qcmapo_demo"
+
+python scripts/train.py \
+  --config qcmapo/configs/default.yaml \
+  algorithm.qcmapo=False \
+  train.total_steps=10000
+
+bash scripts/run_ablation.sh
+bash scripts/run_sensitivity.sh
+
